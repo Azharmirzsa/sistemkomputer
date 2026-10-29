@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MPI - Sistem Komputer | Azhar Mirzsa Husain</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        arabic: ['Amiri', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            900: '#064e3b',
+                        },
+                        gold: '#fbbf24'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- PDF Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        /* Custom Styles & Animations */
+        body { background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; }
+        .glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .hidden-page { display: none !important; }
+        
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+        @keyframes pulse-ring { 0% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); } 100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+        
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        .slide-up { animation: slideUp 0.6s ease-out forwards; }
+        .floating { animation: float 3s ease-in-out infinite; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #059669; }
+
+        /* Interactive Elements */
+        .option-btn { transition: all 0.2s; }
+        .option-btn:active { transform: scale(0.98); }
+        .option-selected { border-color: #10b981; background-color: #ecfdf5; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.1); }
+        .option-correct { border-color: #10b981; background-color: #d1fae5; color: #047857; }
+        .option-wrong { border-color: #ef4444; background-color: #fee2e2; color: #b91c1c; }
+
+        /* Tap-to-Match styling */
+        .match-item { cursor: pointer; transition: all 0.2s; }
+        .match-item.active { border-color: #fbbf24; box-shadow: 0 0 0 2px #fbbf24; background-color: #fffbeb; transform: scale(1.02); }
+        .match-item.matched { opacity: 0.5; cursor: not-allowed; border-color: #10b981; background-color: #ecfdf5; filter: grayscale(50%); }
+        .match-item.error-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; border-color: #ef4444; background-color: #fee2e2; }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        /* Maze Game Canvas */
+        #maze-canvas {
+            background-color: #1f2937;
+            border-radius: 0.5rem;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+            touch-action: none;
+        }
+
+        /* D-Pad Buttons */
+        .d-pad-btn {
+            background: linear-gradient(145deg, #f3f4f6, #d1d5db);
+            box-shadow:  4px 4px 8px #caced1, -4px -4px 8px #ffffff;
+            transition: all 0.1s ease;
+        }
+        .d-pad-btn:active {
+            background: #e5e7eb;
+            box-shadow: inset 4px 4px 8px #caced1, inset -4px -4px 8px #ffffff;
+        }
+
+        /* Print styles */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased overflow-hidden w-screen h-screen flex justify-center items-center">
+
+    <!-- Custom Modal Container -->
+    <div id="custom-modal" class="hidden-page absolute inset-0 z-[100] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl transform slide-up text-center border-t-4 border-brand-500">
+            <div id="modal-icon" class="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-3xl mb-4 bg-brand-100 text-brand-600 shadow-inner">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <h3 id="modal-title" class="text-xl font-extrabold text-gray-900 mb-2">Informasi</h3>
+            <div id="modal-content" class="text-gray-600 mb-6 text-sm leading-relaxed">Pesan informasi disini.</div>
+            <button onclick="closeModal()" id="modal-close-btn" class="w-full py-3 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 transition active:scale-95 shadow-md">Tutup</button>
+        </div>
+    </div>
+
+    <!-- App Container -->
+    <div id="app" class="relative w-full h-full max-w-md mx-auto shadow-2xl bg-white overflow-hidden flex flex-col sm:rounded-2xl sm:h-[95vh] sm:border sm:border-gray-200">
+        
+        <!-- ==================== SPLASH SCREEN ==================== -->
+        <div id="page-splash" class="absolute inset-0 z-50 bg-brand-900 flex flex-col items-center justify-center text-white">
+            <div class="floating mb-6 bg-white/10 p-6 rounded-full backdrop-blur-md">
+                <i class="fas fa-laptop-code text-5xl text-gold"></i>
+            </div>
+            <h1 class="text-2xl font-bold tracking-wider slide-up">EDTECH MADRASAH</h1>
+            <p class="text-brand-100 mt-2 text-sm slide-up" style="animation-delay: 0.2s;">Memuat Pembelajaran Interaktif...</p>
+            
+            <div class="mt-8 w-48 h-2 bg-brand-800 rounded-full overflow-hidden">
+                <div class="h-full bg-gold animate-[pulse-ring_2s_ease-out_infinite] w-full origin-left transform scale-x-0 transition-transform duration-1000" id="splash-progress"></div>
+            </div>
+        </div>
+
+        <!-- ==================== COVER PAGE ==================== -->
+        <div id="page-cover" class="hidden-page absolute inset-0 z-40 bg-gradient-to-br from-brand-50 via-white to-brand-100 flex flex-col items-center justify-center p-6 text-center">
+            <div class="absolute top-0 left-0 w-full h-2 bg-brand-600"></div>
+            
+            <div class="mb-4 fade-in">
+                <span class="px-4 py-1.5 rounded-full bg-white text-brand-700 font-semibold text-xs border border-brand-200 shadow-sm flex items-center">
+                    <i class="fas fa-book-open mr-2"></i>Informatika | Fase D (Kelas 7)
+                </span>
+            </div>
+
+            <h1 class="text-3xl font-extrabold text-brand-900 mb-4 leading-tight fade-in" style="animation-delay: 0.1s;">
+                Komponen & Cara Kerja<br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-emerald-400">Sistem Komputer</span>
+            </h1>
+
+            <!-- Interactive Visual (SVG) -->
+            <div class="relative w-48 h-48 mb-8 floating fade-in" style="animation-delay: 0.2s;">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="100" cy="100" r="90" fill="#ecfdf5" stroke="#10b981" stroke-width="2" stroke-dasharray="5 5" class="animate-[spin_20s_linear_infinite]"/>
+                    <!-- Monitor -->
+                    <rect x="50" y="60" width="100" height="70" rx="5" fill="#047857"/>
+                    <rect x="55" y="65" width="90" height="50" fill="#fff"/>
+                    <path d="M85 130 L115 130 L120 145 L80 145 Z" fill="#064e3b"/>
+                    <!-- Data lines -->
+                    <line x1="100" y1="145" x2="100" y2="160" stroke="#fbbf24" stroke-width="3"/>
+                    <circle cx="100" cy="165" r="8" fill="#fbbf24"/>
+                    <!-- Code symbols -->
+                    <text x="65" y="95" font-family="monospace" font-size="12" fill="#10b981">&lt;/&gt;</text>
+                    <text x="105" y="95" font-family="monospace" font-size="12" fill="#10b981">{ }</text>
+                </svg>
+            </div>
+
+            <div class="flex gap-3 w-full max-w-[250px] mx-auto fade-in" style="animation-delay: 0.3s;">
+                <button onclick="showDevInfo()" class="flex-1 py-2.5 px-3 rounded-xl bg-white text-brand-700 font-semibold border border-brand-200 hover:bg-brand-50 transition shadow-sm text-sm">
+                    <i class="fas fa-user-tie mr-1"></i> Author
+                </button>
+                <button onclick="showObjective()" class="flex-1 py-2.5 px-3 rounded-xl bg-white text-brand-700 font-semibold border border-brand-200 hover:bg-brand-50 transition shadow-sm text-sm">
+                    <i class="fas fa-bullseye mr-1"></i> Tujuan
+                </button>
+            </div>
+            
+            <button onclick="navTo('page-form')" class="mt-6 w-full max-w-[250px] py-3.5 rounded-xl bg-brand-600 text-white font-bold text-lg hover:bg-brand-700 transition shadow-lg shadow-brand-500/30 fade-in flex items-center justify-center group active:scale-95" style="animation-delay: 0.4s;">
+                MULAI
+                <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition"></i>
+            </button>
+        </div>
+
+        <!-- ==================== FORM IDENTITAS ==================== -->
+        <div id="page-form" class="hidden-page absolute inset-0 z-30 bg-gray-50 flex items-center justify-center p-6">
+            <div class="glass w-full max-w-md p-8 rounded-2xl shadow-xl slide-up border border-white">
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800">Identitas Diri</h2>
+                    <p class="text-gray-500 text-sm mt-1">Silakan isi data sebelum memulai</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Lengkap</label>
+                        <input type="text" id="input-nama" placeholder="Masukkan nama..." class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition bg-white/70 shadow-inner">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Kelas</label>
+                        <select id="input-kelas" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition bg-white/70 shadow-inner appearance-none">
+                            <option value="">-- Pilih Kelas --</option>
+                            <option value="VII A">VII A</option>
+                            <option value="VII B">VII B</option>
+                            <option value="VII C">VII C</option>
+                            <option value="VII D">VII D</option>
+                        </select>
+                    </div>
+                    <div class="pt-2">
+                        <button onclick="submitForm()" class="w-full py-3 rounded-xl bg-brand-600 text-white font-bold hover:bg-brand-700 transition shadow-md active:scale-95 flex items-center justify-center">
+                            Lanjutkan <i class="fas fa-check-circle ml-2"></i>
+                        </button>
+                        <button onclick="navTo('page-cover')" class="w-full py-3 mt-2 rounded-xl text-gray-500 text-sm font-semibold hover:bg-gray-100 transition active:scale-95">
+                            Kembali
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PENGANTAR & PANDUAN ==================== -->
+        <div id="page-guide" class="hidden-page absolute inset-0 z-20 bg-white flex flex-col">
+            <div class="h-14 bg-brand-600 flex items-center px-4 text-white shadow-md shrink-0">
+                <i class="fas fa-compass text-lg mr-2"></i>
+                <h2 class="font-bold text-base tracking-wide">Panduan</h2>
+            </div>
+            
+            <div class="flex-1 relative overflow-hidden bg-brand-50 p-6 flex flex-col justify-center items-center">
+                
+                <!-- Slide 1 -->
+                <div id="guide-slide-1" class="guide-slide text-center max-w-sm slide-up">
+                    <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg mx-auto mb-5 text-brand-500 text-3xl">
+                        <i class="fas fa-hand-sparkles"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-brand-900 mb-2">Ahlan wa Sahlan, <br><span id="welcome-name" class="text-brand-600">Siswa</span>!</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed text-justify">
+                        Selamat datang di Media Pembelajaran Interaktif. Hari ini kita akan menjelajahi dunia komputer, teknologi luar biasa yang Allah izinkan tercipta untuk memudahkan kehidupan.
+                    </p>
+                </div>
+
+                <!-- Slide 2 -->
+                <div id="guide-slide-2" class="guide-slide hidden-page text-center max-w-sm slide-up">
+                    <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg mx-auto mb-5 text-blue-500 text-3xl">
+                        <i class="fas fa-route"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-brand-900 mb-2">Belajar Bertahap</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed text-justify">
+                        Aplikasi ini memiliki misi berurutan: <strong>Belajar, Bermain, dan Berlatih</strong>. Selesaikan materi untuk membuka permainan, dan tuntaskan permainan untuk evaluasi.
+                    </p>
+                </div>
+
+                <!-- Slide 3 -->
+                <div id="guide-slide-3" class="guide-slide hidden-page text-center max-w-sm slide-up">
+                    <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg mx-auto mb-5 text-gold text-3xl">
+                        <i class="fas fa-medal"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-brand-900 mb-2">Mulai Misi</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed text-center">
+                        Mari belajar dengan niat mencari ilmu karena Allah. Tetap fokus dan semangat!
+                    </p>
+                </div>
+
+            </div>
+            
+            <!-- Controls -->
+            <div class="h-16 bg-white border-t border-gray-200 flex items-center justify-between px-4 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                <div class="flex space-x-1.5">
+                    <div id="dot-1" class="w-2.5 h-2.5 rounded-full bg-brand-600 transition-colors"></div>
+                    <div id="dot-2" class="w-2.5 h-2.5 rounded-full bg-gray-300 transition-colors"></div>
+                    <div id="dot-3" class="w-2.5 h-2.5 rounded-full bg-gray-300 transition-colors"></div>
+                </div>
+                <div class="flex space-x-2">
+                    <button id="btn-guide-prev" onclick="changeGuide(-1)" class="hidden px-3 py-1.5 rounded-lg border border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition active:scale-95">Kembali</button>
+                    <button id="btn-guide-next" onclick="changeGuide(1)" class="px-4 py-1.5 rounded-lg bg-brand-600 text-white text-sm font-bold hover:bg-brand-700 transition shadow-md active:scale-95">Lanjut</button>
+                    <button id="btn-guide-finish" onclick="navTo('page-main-menu')" class="hidden px-4 py-1.5 rounded-lg bg-gold text-brand-900 text-sm font-bold hover:bg-yellow-500 transition shadow-md active:scale-95">Mulai</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== MENU UTAMA ==================== -->
+        <div id="page-main-menu" class="hidden-page absolute inset-0 z-10 bg-gray-50 flex flex-col">
+            <!-- Header -->
+            <div class="bg-brand-600 text-white p-5 pb-10 rounded-b-3xl shadow-lg shrink-0 relative">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-lg font-bold tracking-wide">DASHBOARD</h2>
+                    <button onclick="logout()" class="w-8 h-8 rounded-full bg-brand-700 hover:bg-brand-800 flex items-center justify-center transition border border-brand-400 active:scale-95" title="Halaman Awal">
+                        <i class="fas fa-home text-xs"></i>
+                    </button>
+                </div>
+                <div class="bg-brand-800/50 px-3 py-1.5 rounded-lg text-xs font-semibold border border-brand-500 inline-flex items-center mb-2">
+                    <i class="fas fa-user-circle mr-1.5 text-gold text-sm"></i> <span id="display-name" class="mr-1 truncate max-w-[100px]">Siswa</span> | <span id="display-class" class="ml-1">Kelas</span>
+                </div>
+                <h1 class="text-2xl font-extrabold mb-1">Misi Belajarmu</h1>
+                <p class="text-brand-100 text-xs">Selesaikan tahap demi tahap.</p>
+            </div>
+
+            <!-- Menu Cards -->
+            <div class="flex-1 p-4 -mt-6 overflow-y-auto pb-6">
+                <div class="space-y-3">
+                    
+                    <!-- Menu 1: Belajar -->
+                    <div onclick="openMenu('belajar')" class="glass relative overflow-hidden rounded-xl p-4 cursor-pointer transform transition active:scale-95 border-l-4 border-l-blue-500 shadow-sm">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl shadow-inner">
+                                <i class="fas fa-book-reader"></i>
+                            </div>
+                            <div class="ml-3 flex-1">
+                                <h3 class="text-base font-bold text-gray-800">1. BELAJAR</h3>
+                                <p class="text-xs text-gray-500">Materi Interaktif & Eksplorasi</p>
+                            </div>
+                            <div id="status-belajar" class="w-8 h-8 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-sm border border-blue-100">
+                                <i class="fas fa-unlock"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Menu 2: Bermain -->
+                    <div id="card-bermain" onclick="openMenu('bermain')" class="glass relative overflow-hidden rounded-xl p-4 cursor-pointer transform transition active:scale-95 border-l-4 border-l-gray-400 opacity-60">
+                        <div class="flex items-center">
+                            <div id="icon-bermain" class="w-12 h-12 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xl shadow-inner transition-colors">
+                                <i class="fas fa-gamepad"></i>
+                            </div>
+                            <div class="ml-3 flex-1">
+                                <h3 class="text-base font-bold text-gray-800">2. BERMAIN</h3>
+                                <p class="text-xs text-gray-500">Tantangan Mencocokkan</p>
+                            </div>
+                            <div id="lock-bermain" class="w-8 h-8 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center text-sm border border-gray-200 transition-colors">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Menu 3: Berlatih -->
+                    <div id="card-berlatih" onclick="openMenu('berlatih')" class="glass relative overflow-hidden rounded-xl p-4 cursor-pointer transform transition active:scale-95 border-l-4 border-l-gray-400 opacity-60">
+                        <div class="flex items-center">
+                            <div id="icon-berlatih" class="w-12 h-12 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xl shadow-inner transition-colors">
+                                <i class="fas fa-pen-alt"></i>
+                            </div>
+                            <div class="ml-3 flex-1">
+                                <h3 class="text-base font-bold text-gray-800">3. BERLATIH</h3>
+                                <p class="text-xs text-gray-500">Asesmen & Cetak Hasil</p>
+                            </div>
+                            <div id="lock-berlatih" class="w-8 h-8 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center text-sm border border-gray-200 transition-colors">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Menu 4: Mini Game -->
+                    <div onclick="openMenu('maze')" class="glass relative overflow-hidden rounded-xl p-4 cursor-pointer transform transition active:scale-95 border-l-4 border-l-purple-500 shadow-sm mt-6">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xl shadow-inner">
+                                <i class="fas fa-map-marked-alt"></i>
+                            </div>
+                            <div class="ml-3 flex-1">
+                                <h3 class="text-base font-bold text-gray-800">MINI GAME</h3>
+                                <p class="text-xs text-gray-500">Labirin Hardware (Bonus)</p>
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center text-sm border border-purple-100">
+                                <i class="fas fa-play"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== MODULE: BELAJAR ==================== -->
+        <div id="page-belajar" class="hidden-page absolute inset-0 z-20 bg-white flex flex-col">
+            <div class="h-14 bg-blue-600 flex items-center justify-between px-3 text-white shadow-md shrink-0">
+                <button onclick="navTo('page-main-menu')" class="w-8 h-8 flex items-center justify-center hover:bg-blue-700 rounded-lg transition active:scale-95"><i class="fas fa-arrow-left"></i></button>
+                <h2 class="font-bold text-sm tracking-wide"><i class="fas fa-book-open mr-1.5"></i>Materi</h2>
+                <div class="w-8">
+                    <button onclick="navTo('page-main-menu')" class="w-8 h-8 flex items-center justify-center hover:bg-blue-700 rounded-lg transition active:scale-95" title="Menu Utama"><i class="fas fa-home"></i></button>
+                </div>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-4 bg-slate-50 pb-20">
+                <div class="space-y-6 fade-in">
+                    
+                    <div class="text-center space-y-1 mt-2">
+                        <span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest">Informatika Fase D</span>
+                        <h1 class="text-2xl font-extrabold text-gray-900">Sistem Komputer</h1>
+                        <p class="text-xs text-gray-500">Komponen dan Cara Kerja</p>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                        <p class="text-sm text-gray-700 leading-relaxed text-justify mb-3">
+                            <strong>Sistem Komputer</strong> adalah kumpulan perangkat (hardware, software, brainware) yang saling berinteraksi untuk mengolah data menjadi informasi berharga.
+                        </p>
+                        <div class="flex items-start bg-brand-50 p-3 rounded-lg border border-brand-200">
+                            <div class="text-brand-500 text-lg mr-3 mt-0.5"><i class="fas fa-quran"></i></div>
+                            <div>
+                                <p class="text-xs font-semibold text-brand-800 mb-0.5">Sudut Pandang Islam</p>
+                                <p class="text-[10px] text-gray-700 italic">"Bacalah dengan (menyebut) nama Tuhanmu..." (QS. Al-'Alaq: 1)</p>
+                                <p class="text-[10px] text-gray-600 mt-1 text-justify leading-tight">Gunakanlah teknologi ciptaan manusia atas izin Allah ini untuk meraih pahala dan kebaikan umat.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2 class="text-lg font-bold text-gray-800 border-b-2 border-blue-200 pb-1 mt-4 inline-block">4 Hardware Utama</h2>
+                    
+                    <div class="grid grid-cols-1 gap-3">
+                        <!-- Input -->
+                        <div class="bg-white p-3.5 rounded-xl shadow-sm border border-yellow-200 flex items-center">
+                            <div class="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-lg flex items-center justify-center text-lg mr-3 shrink-0">
+                                <i class="fas fa-keyboard"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-900 text-sm mb-0.5">1. Input (Masukan)</h3>
+                                <p class="text-xs text-gray-600">Memasukkan data. <br><span class="font-semibold text-gray-800">Contoh:</span> Keyboard, Mouse, Scanner.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Process -->
+                        <div class="bg-white p-3.5 rounded-xl shadow-sm border border-green-200 flex items-center">
+                            <div class="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center text-lg mr-3 shrink-0">
+                                <i class="fas fa-microchip"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-900 text-sm mb-0.5">2. Process (Proses)</h3>
+                                <p class="text-xs text-gray-600">Otak komputer pengolah data. <br><span class="font-semibold text-gray-800">Contoh:</span> CPU (Processor), RAM.</p>
+                            </div>
+                        </div>
+
+                        <!-- Storage -->
+                        <div class="bg-white p-3.5 rounded-xl shadow-sm border border-purple-200 flex items-center">
+                            <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-lg mr-3 shrink-0">
+                                <i class="fas fa-hdd"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-900 text-sm mb-0.5">3. Storage (Penyimpanan)</h3>
+                                <p class="text-xs text-gray-600">Menyimpan data/program. <br><span class="font-semibold text-gray-800">Contoh:</span> Harddisk, SSD, Flashdisk.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Output -->
+                        <div class="bg-white p-3.5 rounded-xl shadow-sm border border-blue-200 flex items-center">
+                            <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-lg mr-3 shrink-0">
+                                <i class="fas fa-print"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-900 text-sm mb-0.5">4. Output (Keluaran)</h3>
+                                <p class="text-xs text-gray-600">Menampilkan hasil visual/cetak/suara. <br><span class="font-semibold text-gray-800">Contoh:</span> Monitor, Printer, Speaker.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-800 text-white p-4 rounded-xl text-center shadow-md">
+                        <h3 class="font-bold mb-2 text-sm">Alur Kerja</h3>
+                        <div class="flex justify-center items-center space-x-1.5 text-xs font-semibold">
+                            <span class="bg-yellow-500 px-2 py-1 rounded text-black">INPUT</span>
+                            <i class="fas fa-arrow-right text-gray-400 text-[10px]"></i>
+                            <span class="bg-green-500 px-2 py-1 rounded text-white">PROCESS</span>
+                            <i class="fas fa-arrow-right text-gray-400 text-[10px]"></i>
+                            <span class="bg-blue-500 px-2 py-1 rounded text-white">OUTPUT</span>
+                        </div>
+                    </div>
+
+                    <h2 class="text-lg font-bold text-gray-800 border-b-2 border-indigo-200 pb-1 mt-6 inline-block">Software & Brainware</h2>
+                    
+                    <div class="grid grid-cols-1 gap-3">
+                        <!-- Software -->
+                        <div class="bg-white p-3.5 rounded-xl shadow-sm border border-indigo-200 flex items-center">
+                            <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center text-lg mr-3 shrink-0">
+                                <i class="fas fa-compact-disc"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-900 text-sm mb-0.5">Perangkat Lunak (Software)</h3>
+                                <p class="text-xs text-gray-600">Program yang berisi instruksi digital untuk menjalankan hardware. <br><span class="font-semibold text-gray-800">Contoh:</span> Windows, Android, Chrome.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Brainware -->
+                        <div class="bg-white p-3.5 rounded-xl shadow-sm border border-pink-200 flex items-center">
+                            <div class="w-10 h-10 bg-pink-100 text-pink-600 rounded-lg flex items-center justify-center text-lg mr-3 shrink-0">
+                                <i class="fas fa-user-astronaut"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-900 text-sm mb-0.5">Pengguna (Brainware)</h3>
+                                <p class="text-xs text-gray-600">Manusia yang mengoperasikan dan mengendalikan komputer. Tanpa manusia, sistem tidak akan berfungsi.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            
+            <div class="absolute bottom-0 left-0 w-full bg-white border-t border-gray-100 p-3 flex justify-between items-center shadow-[0_-5px_15px_-3px_rgba(0,0,0,0.05)] shrink-0">
+                <span class="text-xs font-semibold text-gray-500 ml-1">Paham materinya?</span>
+                <button onclick="finishBelajar()" class="px-5 py-2 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition shadow-md active:scale-95">
+                    Selesai & Lanjut <i class="fas fa-check-circle ml-1"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== MODULE: BERMAIN ==================== -->
+        <div id="page-bermain" class="hidden-page absolute inset-0 z-20 bg-indigo-50 flex flex-col">
+            <div class="h-14 bg-indigo-600 flex items-center justify-between px-3 text-white shadow-md shrink-0">
+                <button onclick="navTo('page-main-menu')" class="w-8 h-8 flex items-center justify-center hover:bg-indigo-700 rounded-lg transition active:scale-95"><i class="fas fa-arrow-left"></i></button>
+                <h2 class="font-bold text-sm tracking-wide"><i class="fas fa-gamepad mr-1.5"></i>Tantangan Mencocokkan</h2>
+                <div class="flex items-center space-x-2">
+                    <span class="font-mono font-bold text-sm bg-indigo-700 px-2 py-1 rounded" id="match-score">0/6</span>
+                    <button onclick="navTo('page-main-menu')" class="w-8 h-8 flex items-center justify-center hover:bg-indigo-700 rounded-lg transition active:scale-95" title="Menu Utama"><i class="fas fa-home"></i></button>
+                </div>
+            </div>
+            
+            <div class="flex-1 p-4 overflow-y-auto flex flex-col">
+                <div class="bg-white rounded-xl p-3 shadow-sm mb-4 text-center border border-indigo-100">
+                    <p class="text-sm font-semibold text-indigo-900">Ketuk Perangkat, lalu ketuk Fungsinya!</p>
+                </div>
+                
+                <div class="flex-1 grid grid-cols-2 gap-4">
+                    <!-- Left: Devices -->
+                    <div class="flex flex-col space-y-3" id="match-items-container">
+                        <!-- Generated via JS -->
+                    </div>
+                    
+                    <!-- Right: Categories -->
+                    <div class="flex flex-col space-y-3" id="match-targets-container">
+                        <!-- Generated via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== MODULE: BERLATIH ==================== -->
+        <div id="page-berlatih" class="hidden-page absolute inset-0 z-20 bg-teal-50 flex flex-col">
+            <div class="h-14 bg-teal-600 flex items-center justify-between px-3 text-white shadow-md shrink-0">
+                <button onclick="navTo('page-main-menu')" class="w-8 h-8 flex items-center justify-center hover:bg-teal-700 rounded-lg transition active:scale-95"><i class="fas fa-arrow-left"></i></button>
+                <h2 class="font-bold text-sm tracking-wide"><i class="fas fa-pen-alt mr-1.5"></i>Evaluasi</h2>
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-bold bg-teal-700 px-2 py-1 rounded" id="quiz-progress-text">1/5</span>
+                    <button onclick="navTo('page-main-menu')" class="w-8 h-8 flex items-center justify-center hover:bg-teal-700 rounded-lg transition active:scale-95" title="Menu Utama"><i class="fas fa-home"></i></button>
+                </div>
+            </div>
+            
+            <div class="flex-1 p-5 overflow-y-auto flex flex-col" id="quiz-container">
+                <!-- Progress bar -->
+                <div class="w-full h-1.5 bg-teal-200 rounded-full mb-6">
+                    <div id="quiz-progress-bar" class="h-full bg-teal-600 rounded-full transition-all duration-300 w-[20%]"></div>
+                </div>
+
+                <div id="quiz-question-box" class="bg-white p-5 rounded-xl shadow-sm border border-teal-100 mb-6 slide-up">
+                    <p id="quiz-question-text" class="text-sm font-bold text-gray-800 leading-relaxed"></p>
+                </div>
+
+                <div id="quiz-options-box" class="space-y-3 flex-1">
+                    <!-- Options generated via JS -->
+                </div>
+                
+                <button id="btn-quiz-next" onclick="nextQuestion()" class="hidden w-full py-3 mt-4 rounded-xl bg-teal-600 text-white font-bold hover:bg-teal-700 transition shadow-md active:scale-95 slide-up">
+                    Soal Selanjutnya <i class="fas fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+            
+            <!-- Result Screen -->
+            <div id="quiz-result-container" class="hidden-page flex-1 p-6 flex flex-col items-center justify-center text-center">
+                <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg mb-4">
+                    <i class="fas fa-trophy text-5xl text-gold"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-teal-900 mb-1">Evaluasi Selesai!</h2>
+                <p class="text-gray-600 text-sm mb-6">Berikut adalah perolehan nilaimu:</p>
+                
+                <div class="text-6xl font-extrabold text-teal-600 mb-8" id="quiz-final-score">100</div>
+                
+                <button onclick="generatePDF()" class="w-full py-3 mb-3 rounded-xl bg-brand-600 text-white font-bold hover:bg-brand-700 transition shadow-md active:scale-95 flex items-center justify-center">
+                    <i class="fas fa-file-pdf mr-2"></i> Cetak Hasil (PDF)
+                </button>
+                <button onclick="navTo('page-main-menu')" class="w-full py-3 rounded-xl bg-white border border-gray-300 text-gray-700 font-bold hover:bg-gray-50 transition active:scale-95">
+                    Kembali ke Menu
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== MODULE: MINI GAME MAZE ==================== -->
+        <div id="page-maze" class="hidden-page absolute inset-0 z-20 bg-gray-900 flex flex-col">
+            <div class="h-14 bg-purple-700 flex items-center justify-between px-3 text-white shadow-md shrink-0">
+                <button onclick="closeMaze()" class="w-8 h-8 flex items-center justify-center hover:bg-purple-800 rounded-lg transition active:scale-95"><i class="fas fa-arrow-left"></i></button>
+                <h2 class="font-bold text-sm tracking-wide"><i class="fas fa-map-marked-alt mr-1.5"></i>Labirin Hardware</h2>
+                <div class="w-8">
+                    <button onclick="navTo('page-main-menu')" class="w-8 h-8 flex items-center justify-center hover:bg-purple-800 rounded-lg transition active:scale-95" title="Menu Utama"><i class="fas fa-home"></i></button>
+                </div>
+            </div>
+            
+            <div class="flex-1 flex flex-col items-center justify-center p-4">
+                <div class="text-center mb-3">
+                    <p class="text-purple-200 text-xs mb-1">Bawa <span class="text-blue-400 font-bold">Data (Biru)</span> ke <span class="text-green-400 font-bold">CPU (Hijau)</span></p>
+                </div>
+                
+                <!-- Canvas -->
+                <canvas id="maze-canvas" width="280" height="280" class="mb-6 bg-gray-800 rounded-lg shadow-lg border border-gray-700"></canvas>
+                
+                <!-- D-Pad -->
+                <div class="grid grid-cols-3 gap-2 w-48 h-48 mt-2">
+                    <div></div>
+                    <button class="d-pad-btn rounded-t-xl flex items-center justify-center text-gray-700 text-xl" onclick="mazeMove(0, -1)"><i class="fas fa-caret-up"></i></button>
+                    <div></div>
+                    
+                    <button class="d-pad-btn rounded-l-xl flex items-center justify-center text-gray-700 text-xl" onclick="mazeMove(-1, 0)"><i class="fas fa-caret-left"></i></button>
+                    <div class="bg-gray-300 rounded-full shadow-inner flex items-center justify-center text-xs text-gray-500 font-bold">MOVE</div>
+                    <button class="d-pad-btn rounded-r-xl flex items-center justify-center text-gray-700 text-xl" onclick="mazeMove(1, 0)"><i class="fas fa-caret-right"></i></button>
+                    
+                    <div></div>
+                    <button class="d-pad-btn rounded-b-xl flex items-center justify-center text-gray-700 text-xl" onclick="mazeMove(0, 1)"><i class="fas fa-caret-down"></i></button>
+                    <div></div>
+                </div>
+            </div>
+        </div>
+    </div> <!-- Penutup untuk container #app -->
+
+    <!-- ==================== PDF CERTIFICATE TEMPLATE ==================== -->
+    <div id="print-area" class="hidden-page bg-white text-black p-[2cm] font-serif box-border w-[210mm] min-h-[297mm] mx-auto">
+        <!-- KOP Laporan -->
+        <div class="border-b-[3px] border-black pb-4 mb-8 text-center flex flex-col items-center">
+            <h1 class="text-2xl font-bold uppercase mb-1 tracking-wider">Laporan Hasil Belajar Siswa</h1>
+            <h2 class="text-lg font-bold uppercase mb-1">Mata Pelajaran Informatika</h2>
+            <p class="text-sm">Media Pembelajaran Interaktif (MPI) - Sistem Komputer Fase D</p>
+        </div>
+            
+            <div class="space-y-4 text-base leading-relaxed text-justify px-4">
+                <p>Berdasarkan evaluasi pembelajaran interaktif yang telah dilaksanakan, dengan ini menerangkan bahwa siswa dengan identitas berikut:</p>
+                
+                <table class="w-full ml-4 mb-4">
+                    <tr><td class="w-40 py-1.5">Nama Lengkap</td><td class="w-4">:</td><td><strong id="pdf-name">Nama</strong></td></tr>
+                    <tr><td class="w-40 py-1.5">Kelas</td><td class="w-4">:</td><td><strong id="pdf-class">Kelas</strong></td></tr>
+                </table>
+
+                <p>Telah menyelesaikan seluruh modul pembelajaran <strong>Sistem Komputer</strong> yang meliputi:</p>
+                <ol class="list-decimal list-inside ml-4 space-y-1 mb-6">
+                    <li>Eksplorasi Materi Komponen & Cara Kerja Komputer.</li>
+                    <li>Tantangan Mencocokkan Perangkat Keras.</li>
+                    <li>Asesmen Evaluasi Pengetahuan.</li>
+                </ol>
+
+                <p>Berdasarkan hasil asesmen kognitif yang telah dikerjakan, siswa tersebut mendapatkan perolehan nilai akhir sebesar:</p>
+                
+                <div class="text-center my-10">
+                    <span class="text-7xl font-bold" id="pdf-score">100</span>
+                    <p class="text-lg font-semibold italic mt-2 text-gray-700">( <span id="pdf-score-text">Seratus</span> )</p>
+                </div>
+
+                <p>Demikian laporan ini dibuat secara otomatis oleh sistem sebagai bukti ketuntasan belajar siswa yang bersangkutan.</p>
+            </div>
+
+            <div class="mt-20 flex justify-end px-4">
+            <div class="text-center w-64">
+                <p class="mb-24">Gorontalo, <span id="pdf-date">TANGGAL</span></p>
+                <p class="font-bold underline">Azhar Mirzsa Husain</p>
+                <p class="text-sm">Pengembang Aplikasi MPI</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        // ==========================================
+        // GANTI URL DI BAWAH INI DENGAN URL GAS ANDA
+        // ==========================================
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbx0b44zoJWEHDkzJVNfoiOSW7E-8OaZIrVC200hG2uqMbMY1di1W1MiywsX1g88ZqZk/exec";
+        
+        // --- State Management ---
+        const state = {
+            name: '',
+            kelas: '',
+            progress: {
+                belajar: false,
+                bermain: false,
+                berlatih: false
+            },
+            guideStep: 1,
+            matchSelections: { item: null, target: null },
+            matchScore: 0,
+            quizCurrent: 0,
+            quizScore: 0,
+            quizFinished: false,
+            // Database variables
+            userAnswers: [],
+            correctCount: 0,
+            wrongCount: 0
+        };
+
+        // --- Core Navigation ---
+        function navTo(pageId) {
+            document.querySelectorAll('#app > div:not(#custom-modal)').forEach(el => {
+                if(!el.classList.contains('hidden-page')) {
+                    el.classList.add('hidden-page');
+                }
+            });
+            document.getElementById(pageId).classList.remove('hidden-page');
+        }
+
+        function showModal(title, text, icon = 'fa-info-circle', color = 'text-brand-600', bg = 'bg-brand-100', hideClose = false) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-content').innerHTML = text;
+            const iconEl = document.getElementById('modal-icon');
+            iconEl.className = `w-16 h-16 rounded-full mx-auto flex items-center justify-center text-3xl mb-4 shadow-inner ${bg} ${color}`;
+            iconEl.innerHTML = `<i class="fas ${icon}"></i>`;
+            
+            const btnClose = document.getElementById('modal-close-btn');
+            if(hideClose) btnClose.style.display = 'none';
+            else btnClose.style.display = 'block';
+            
+            document.getElementById('custom-modal').classList.remove('hidden-page');
+        }
+
+        function closeModal() {
+            document.getElementById('custom-modal').classList.add('hidden-page');
+        }
+
+        // --- Init Splash ---
+        window.onload = () => {
+            setTimeout(() => {
+                navTo('page-cover');
+            }, 2000);
+        };
+
+        // --- Cover & Form Logic ---
+        function showDevInfo() {
+            showModal('Profil Pengembang', 'Aplikasi ini dikembangkan oleh <strong>Azhar Mirzsa Husain</strong> sebagai Media Pembelajaran Interaktif Informatika (Sistem Komputer).', 'fa-user-tie');
+        }
+
+        function showObjective() {
+            showModal('Tujuan Pembelajaran', '<ul class="text-left list-disc pl-4 space-y-1"><li>Memahami pengertian Sistem Komputer.</li><li>Mengidentifikasi komponen hardware.</li><li>Mengetahui fungsi Input, Process, Output, Storage.</li></ul>', 'fa-bullseye', 'text-blue-600', 'bg-blue-100');
+        }
+
+        function submitForm() {
+            const nama = document.getElementById('input-nama').value.trim();
+            const kelas = document.getElementById('input-kelas').value;
+            
+            if (!nama || !kelas) {
+                showModal('Peringatan', 'Silakan isi Nama dan Kelas terlebih dahulu.', 'fa-exclamation-triangle', 'text-yellow-600', 'bg-yellow-100');
+                return;
+            }
+            
+            state.name = nama;
+            state.kelas = kelas;
+            
+            document.getElementById('welcome-name').innerText = nama;
+            document.getElementById('display-name').innerText = nama;
+            document.getElementById('display-class').innerText = kelas;
+            
+            updateMenuUI();
+            navTo('page-guide');
+            state.guideStep = 1;
+            updateGuideUI();
+        }
+
+        function logout() {
+            state.name = ''; state.kelas = '';
+            state.progress = { belajar: false, bermain: false, berlatih: false };
+            document.getElementById('input-nama').value = '';
+            document.getElementById('input-kelas').value = '';
+            navTo('page-cover');
+        }
+
+        // --- Guide Logic ---
+        function updateGuideUI() {
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById(`guide-slide-${i}`).classList.add('hidden-page');
+                document.getElementById(`dot-${i}`).className = i === state.guideStep ? 'w-2.5 h-2.5 rounded-full bg-brand-600 transition-colors' : 'w-2.5 h-2.5 rounded-full bg-gray-300 transition-colors';
+            }
+            document.getElementById(`guide-slide-${state.guideStep}`).classList.remove('hidden-page');
+            
+            const prev = document.getElementById('btn-guide-prev');
+            const next = document.getElementById('btn-guide-next');
+            const finish = document.getElementById('btn-guide-finish');
+            
+            if (state.guideStep === 1) { prev.classList.add('hidden'); next.classList.remove('hidden'); finish.classList.add('hidden'); }
+            else if (state.guideStep === 2) { prev.classList.remove('hidden'); next.classList.remove('hidden'); finish.classList.add('hidden'); }
+            else { prev.classList.remove('hidden'); next.classList.add('hidden'); finish.classList.remove('hidden'); }
+        }
+
+        function changeGuide(dir) {
+            state.guideStep += dir;
+            updateGuideUI();
+        }
+
+        // --- Main Menu Logic ---
+        function updateMenuUI() {
+            // Update Bermain card
+            const cardBermain = document.getElementById('card-bermain');
+            const iconBermain = document.getElementById('icon-bermain');
+            const lockBermain = document.getElementById('lock-bermain');
+            if (state.progress.belajar) {
+                cardBermain.classList.remove('opacity-60', 'border-l-gray-400');
+                cardBermain.classList.add('border-l-indigo-500', 'shadow-sm');
+                iconBermain.className = 'w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl shadow-inner transition-colors';
+                lockBermain.className = 'w-8 h-8 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center text-sm border border-indigo-100';
+                lockBermain.innerHTML = '<i class="fas fa-unlock"></i>';
+            }
+            
+            // Update Berlatih card
+            const cardBerlatih = document.getElementById('card-berlatih');
+            const iconBerlatih = document.getElementById('icon-berlatih');
+            const lockBerlatih = document.getElementById('lock-berlatih');
+            if (state.progress.bermain) {
+                cardBerlatih.classList.remove('opacity-60', 'border-l-gray-400');
+                cardBerlatih.classList.add('border-l-teal-500', 'shadow-sm');
+                iconBerlatih.className = 'w-12 h-12 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center text-xl shadow-inner transition-colors';
+                lockBerlatih.className = 'w-8 h-8 rounded-full bg-teal-50 text-teal-500 flex items-center justify-center text-sm border border-teal-100';
+                lockBerlatih.innerHTML = '<i class="fas fa-unlock"></i>';
+            }
+        }
+
+        function openMenu(menu) {
+            if (menu === 'belajar') navTo('page-belajar');
+            else if (menu === 'bermain') {
+                if (state.progress.belajar) { initMatchGame(); navTo('page-bermain'); }
+                else showModal('Terkunci', 'Selesaikan materi BELAJAR terlebih dahulu.', 'fa-lock', 'text-gray-500', 'bg-gray-100');
+            }
+            else if (menu === 'berlatih') {
+                if (state.progress.bermain) { initQuiz(); navTo('page-berlatih'); }
+                else showModal('Terkunci', 'Selesaikan tantangan BERMAIN terlebih dahulu.', 'fa-lock', 'text-gray-500', 'bg-gray-100');
+            }
+            else if (menu === 'maze') {
+                initMaze(); navTo('page-maze');
+            }
+        }
+
+        function finishBelajar() {
+            state.progress.belajar = true;
+            updateMenuUI();
+            showModal('Hebat!', 'Materi selesai. Tantangan <strong>Bermain</strong> telah terbuka!', 'fa-star', 'text-yellow-500', 'bg-yellow-100');
+            navTo('page-main-menu');
+        }
+
+        // --- Bermain (Match Game) Logic ---
+        const matchData = [
+            { id: 'i1', pair: 'p1', name: 'Keyboard', icon: 'fa-keyboard' },
+            { id: 'i2', pair: 'p2', name: 'Monitor', icon: 'fa-desktop' },
+            { id: 'i3', pair: 'p3', name: 'CPU', icon: 'fa-microchip' },
+            { id: 'i4', pair: 'p4', name: 'Harddisk', icon: 'fa-hdd' },
+            { id: 'i5', pair: 'p5', name: 'Mouse', icon: 'fa-mouse' },
+            { id: 'i6', pair: 'p6', name: 'Printer', icon: 'fa-print' }
+        ];
+        const targetData = [
+            { id: 't1', pair: 'p1', name: 'Mengetik Teks' },
+            { id: 't2', pair: 'p2', name: 'Tampil Visual' },
+            { id: 't3', pair: 'p3', name: 'Otak Pemroses' },
+            { id: 't4', pair: 'p4', name: 'Simpan Data' },
+            { id: 't5', pair: 'p5', name: 'Gerak Kursor' },
+            { id: 't6', pair: 'p6', name: 'Cetak Kertas' }
+        ];
+
+        function initMatchGame() {
+            state.matchScore = 0;
+            state.matchSelections = { item: null, target: null };
+            document.getElementById('match-score').innerText = `0/6`;
+            
+            const itemCont = document.getElementById('match-items-container');
+            const targetCont = document.getElementById('match-targets-container');
+            itemCont.innerHTML = ''; targetCont.innerHTML = '';
+            
+            let items = [...matchData].sort(() => Math.random() - 0.5);
+            let targets = [...targetData].sort(() => Math.random() - 0.5);
+
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = `match-item bg-white border-2 border-indigo-100 rounded-xl p-2 flex flex-col items-center justify-center text-center shadow-sm h-16`;
+                div.id = item.id;
+                div.dataset.pair = item.pair;
+                div.innerHTML = `<i class="fas ${item.icon} text-xl text-indigo-500 mb-1"></i><span class="text-[10px] font-bold text-gray-700 leading-tight">${item.name}</span>`;
+                div.onclick = () => selectMatch('item', div);
+                itemCont.appendChild(div);
+            });
+
+            targets.forEach(tgt => {
+                const div = document.createElement('div');
+                div.className = `match-item bg-indigo-50 border-2 border-dashed border-indigo-300 rounded-xl p-2 flex items-center justify-center text-center h-16`;
+                div.id = tgt.id;
+                div.dataset.pair = tgt.pair;
+                div.innerHTML = `<span class="text-[11px] font-bold text-indigo-700 uppercase tracking-wider leading-tight">${tgt.name}</span>`;
+                div.onclick = () => selectMatch('target', div);
+                targetCont.appendChild(div);
+            });
+        }
+
+        function selectMatch(role, el) {
+            if (el.classList.contains('matched')) return;
+            
+            document.querySelectorAll(`.match-item[data-role="${role}"]`).forEach(e => {
+                if(!e.classList.contains('matched')) e.classList.remove('active');
+            });
+            
+            el.classList.add('active');
+            el.dataset.role = role;
+            state.matchSelections[role] = el;
+            
+            checkMatch();
+        }
+
+        function checkMatch() {
+            if (state.matchSelections.item && state.matchSelections.target) {
+                const elItem = state.matchSelections.item;
+                const elTarget = state.matchSelections.target;
+                
+                if (elItem.dataset.pair === elTarget.dataset.pair) {
+                    elItem.classList.replace('active', 'matched');
+                    elTarget.classList.replace('active', 'matched');
+                    state.matchScore++;
+                    document.getElementById('match-score').innerText = `${state.matchScore}/6`;
+                    
+                    if (state.matchScore === 6) {
+                        setTimeout(() => {
+                            state.progress.bermain = true;
+                            updateMenuUI();
+                            showModal('Luar Biasa!', 'Kamu berhasil mencocokkan semua perangkat. Tantangan <strong>Berlatih</strong> telah terbuka!', 'fa-trophy', 'text-gold', 'bg-yellow-50');
+                            navTo('page-main-menu');
+                        }, 500);
+                    }
+                } else {
+                    elItem.classList.remove('active');
+                    elTarget.classList.remove('active');
+                    elItem.classList.add('error-shake');
+                    elTarget.classList.add('error-shake');
+                    setTimeout(() => {
+                        elItem.classList.remove('error-shake');
+                        elTarget.classList.remove('error-shake');
+                    }, 400);
+                }
+                state.matchSelections = { item: null, target: null };
+            }
+        }
+
+        // --- Berlatih (Quiz) Logic ---
+        const quizData = [
+            { q: "Perangkat keras yang berfungsi sebagai otak komputer dan memproses data adalah...", opts: ["Monitor", "RAM", "CPU", "Keyboard"], ans: 2 },
+            { q: "Manakah yang BUKAN termasuk perangkat masukan (Input Device)?", opts: ["Mouse", "Printer", "Scanner", "Microphone"], ans: 1 },
+            { q: "Flashdisk dan Harddisk termasuk ke dalam kategori perangkat...", opts: ["Storage (Penyimpanan)", "Process (Proses)", "Input (Masukan)", "Output (Keluaran)"], ans: 0 },
+            { q: "Fungsi utama dari Monitor adalah...", opts: ["Mengetik huruf", "Menyimpan data", "Mencetak dokumen", "Menampilkan visual"], ans: 3 },
+            { q: "Urutan alur kerja sistem komputer yang benar adalah...", opts: ["Input - Output - Process", "Input - Process - Output", "Process - Input - Output", "Output - Process - Input"], ans: 1 }
+        ];
+
+        function initQuiz() {
+            state.quizCurrent = 0;
+            state.quizScore = 0;
+            state.correctCount = 0;
+            state.wrongCount = 0;
+            state.userAnswers = [];
+            state.quizFinished = false;
+            document.getElementById('quiz-result-container').classList.add('hidden-page');
+            document.getElementById('quiz-container').classList.remove('hidden-page');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const q = quizData[state.quizCurrent];
+            document.getElementById('quiz-progress-text').innerText = `${state.quizCurrent + 1}/${quizData.length}`;
+            document.getElementById('quiz-progress-bar').style.width = `${((state.quizCurrent + 1) / quizData.length) * 100}%`;
+            
+            document.getElementById('quiz-question-text').innerText = q.q;
+            const optsBox = document.getElementById('quiz-options-box');
+            optsBox.innerHTML = '';
+            
+            q.opts.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full text-left px-4 py-3 rounded-xl border border-teal-200 bg-white text-gray-700 text-sm hover:bg-teal-50 transition active:scale-95 option-btn';
+                btn.innerHTML = `<span class="inline-block w-6 h-6 rounded-full bg-teal-100 text-teal-700 text-center font-bold mr-2 text-xs leading-6">${String.fromCharCode(65+idx)}</span> ${opt}`;
+                btn.onclick = () => selectOption(btn, idx);
+                optsBox.appendChild(btn);
+            });
+            document.getElementById('btn-quiz-next').classList.add('hidden');
+        }
+
+        function selectOption(btn, idx) {
+            if (document.getElementById('btn-quiz-next').classList.contains('hidden') === false) return;
+            
+            const q = quizData[state.quizCurrent];
+            const isCorrect = idx === q.ans;
+            const optLetter = String.fromCharCode(65+idx);
+            
+            // Simpan detail jawaban siswa ke dalam state array
+            state.userAnswers[state.quizCurrent] = `${optLetter}. ${q.opts[idx]}`;
+            
+            if (isCorrect) {
+                btn.classList.add('option-correct');
+                state.quizScore += (100 / quizData.length);
+                state.correctCount++;
+            } else {
+                btn.classList.add('option-wrong');
+                document.querySelectorAll('.option-btn')[q.ans].classList.add('option-correct');
+                state.wrongCount++;
+            }
+            
+            document.getElementById('btn-quiz-next').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            state.quizCurrent++;
+            if (state.quizCurrent < quizData.length) {
+                renderQuestion();
+            } else {
+                // Setelah selesai soal terakhir, kirim data ke Google Sheets
+                submitDataToGAS();
+            }
+        }
+
+        async function submitDataToGAS() {
+            if (GAS_URL === "URL_GAS_ANDA_DISINI") {
+                console.warn("GAS_URL belum disetel! Melewati proses pengiriman data ke Google Sheets.");
+                showQuizResult();
+                return;
+            }
+
+            // Tampilkan loading modal
+            showModal('Menyimpan Data', 'Mohon tunggu, sedang mengirimkan hasil belajarmu ke database...', 'fa-spinner fa-spin', 'text-teal-600', 'bg-teal-100', true);
+            
+            const payload = {
+                nama: state.name,
+                kelas: state.kelas,
+                benar: state.correctCount,
+                salah: state.wrongCount,
+                jawaban: state.userAnswers
+            };
+            
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                console.log('Success:', result);
+                closeModal();
+                showQuizResult();
+            } catch(error) {
+                console.error('Error saat menyimpan ke Google Sheets:', error);
+                closeModal();
+                // Walaupun gagal mengirim, tetap tampilkan hasilnya agar siswa bisa mendownload PDF
+                showModal('Informasi', 'Terjadi kendala saat menghubungi database guru, namun kamu tetap bisa mencetak nilaimu.', 'fa-wifi', 'text-yellow-600', 'bg-yellow-100');
+                setTimeout(() => {
+                    closeModal();
+                    showQuizResult();
+                }, 3000);
+            }
+        }
+
+        function showQuizResult() {
+            document.getElementById('quiz-container').classList.add('hidden-page');
+            document.getElementById('quiz-result-container').classList.remove('hidden-page');
+            document.getElementById('quiz-final-score').innerText = Math.round(state.quizScore);
+        }
+
+        function convertScoreToText(score) {
+            const scores = { 100: "Seratus", 80: "Delapan Puluh", 60: "Enam Puluh", 40: "Empat Puluh", 20: "Dua Puluh", 0: "Nol" };
+            return scores[score] || score.toString();
+        }
+
+        function generatePDF() {
+            document.getElementById('pdf-name').innerText = state.name;
+            document.getElementById('pdf-class').innerText = state.kelas;
+            
+            const finalScore = Math.round(state.quizScore);
+            document.getElementById('pdf-score').innerText = finalScore;
+            document.getElementById('pdf-score-text').innerText = convertScoreToText(finalScore);
+            
+            const today = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('pdf-date').innerText = today.toLocaleDateString('id-ID', options);
+            
+            const element = document.getElementById('print-area');
+            const appEl = document.getElementById('app');
+            
+            element.classList.remove('hidden-page');
+            document.body.classList.remove('overflow-hidden', 'h-screen', 'w-screen', 'flex', 'items-center', 'justify-center');
+            appEl.style.display = 'none';
+            
+            const opt = {
+                margin:       0,
+                filename:     `Laporan_Belajar_${state.name.replace(/\s/g, '_')}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.classList.add('hidden-page');
+                document.body.classList.add('overflow-hidden', 'h-screen', 'w-screen', 'flex', 'items-center', 'justify-center');
+                appEl.style.display = '';
+                showModal('Berhasil', 'Laporan PDF berhasil diunduh.', 'fa-file-download', 'text-teal-600', 'bg-teal-100');
+            }).catch((err) => {
+                element.classList.add('hidden-page');
+                document.body.classList.add('overflow-hidden', 'h-screen', 'w-screen', 'flex', 'items-center', 'justify-center');
+                appEl.style.display = '';
+                console.error(err);
+                showModal('Error', 'Terjadi kesalahan saat mencetak PDF.', 'fa-exclamation-circle', 'text-red-600', 'bg-red-100');
+            });
+        }
+
+        // --- Maze Mini Game Logic ---
+        let mazeCtx, mazeLoop;
+        const TILE_SIZE = 28;
+        const MAZE_SIZE = 10;
+        
+        const mazeMap = [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 2, 0, 1, 0, 0, 0, 1, 3, 1],
+            [1, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+            [1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+            [1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 1, 0, 1],
+            [1, 1, 1, 1, 1, 1, 0, 1, 0, 1],
+            [1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+            [1, 0, 1, 1, 0, 0, 0, 1, 0, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        ];
+        
+        let player = { x: 1, y: 1 };
+        
+        function initMaze() {
+            const canvas = document.getElementById('maze-canvas');
+            mazeCtx = canvas.getContext('2d');
+            player = { x: 1, y: 1 };
+            drawMaze();
+        }
+
+        function drawMaze() {
+            mazeCtx.clearRect(0, 0, MAZE_SIZE * TILE_SIZE, MAZE_SIZE * TILE_SIZE);
+            for(let r = 0; r < MAZE_SIZE; r++) {
+                for(let c = 0; c < MAZE_SIZE; c++) {
+                    if(mazeMap[r][c] === 1) {
+                        mazeCtx.fillStyle = '#374151'; // Wall (Gray)
+                        mazeCtx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                    } else if(mazeMap[r][c] === 3) {
+                        mazeCtx.fillStyle = '#10b981'; // End (CPU - Green)
+                        mazeCtx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                        mazeCtx.fillStyle = 'white';
+                        mazeCtx.font = '10px Arial';
+                        mazeCtx.fillText('CPU', c * TILE_SIZE + 4, r * TILE_SIZE + 18);
+                    }
+                }
+            }
+            // Draw Player (Data - Blue)
+            mazeCtx.fillStyle = '#3b82f6';
+            mazeCtx.beginPath();
+            mazeCtx.arc(player.x * TILE_SIZE + TILE_SIZE/2, player.y * TILE_SIZE + TILE_SIZE/2, TILE_SIZE/2 - 4, 0, Math.PI*2);
+            mazeCtx.fill();
+        }
+
+        function mazeMove(dx, dy) {
+            let nx = player.x + dx;
+            let ny = player.y + dy;
+            
+            if(nx >= 0 && nx < MAZE_SIZE && ny >= 0 && ny < MAZE_SIZE) {
+                if(mazeMap[ny][nx] !== 1) {
+                    player.x = nx;
+                    player.y = ny;
+                    drawMaze();
+                    
+                    if(mazeMap[ny][nx] === 3) {
+                        setTimeout(() => {
+                            showModal('Sukses!', 'Data berhasil diproses oleh CPU!', 'fa-microchip', 'text-green-600', 'bg-green-100');
+                            player = { x: 1, y: 1 };
+                            drawMaze();
+                        }, 100);
+                    }
+                }
+            }
+        }
+        
+        function closeMaze() {
+            navTo('page-main-menu');
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if(document.getElementById('page-maze').classList.contains('hidden-page')) return;
+            switch(e.key) {
+                case 'ArrowUp': mazeMove(0, -1); break;
+                case 'ArrowDown': mazeMove(0, 1); break;
+                case 'ArrowLeft': mazeMove(-1, 0); break;
+                case 'ArrowRight': mazeMove(1, 0); break;
+            }
+        });
+    </script>
+</body>
+</html>
